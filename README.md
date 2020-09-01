@@ -1,8 +1,14 @@
-# IEC104_Parser
+# Parser IEC104 Repo
 This repository uses SCAPY as a tool for packet manipulation. 
   
-## Running the project
-<Text>
+## Organization
+The content of this repository includes:
+
+* Library Folder
+  * <text>
+  
+* Examples
+  * <text>
   
   ### Install SCAPY
   This parser works on SCAPY
