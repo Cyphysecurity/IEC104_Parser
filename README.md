@@ -4,7 +4,7 @@ This repository uses SCAPY as a tool for packet manipulation.
 ## Running the project
 <Text>
   
-  ### Download SCAPY
+  ### Install SCAPY
   This parser works on SCAPY
   To download the project: https://scapy.net/download/
   
