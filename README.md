@@ -8,7 +8,8 @@ The content of this repository includes:
   * <text>
   
 * Examples
-  * <text>
+  * ASDU Type M_ME_TF_1 (36): 6819c45902002401030001001304007f1daf4200b922120a0b0811
+  * ASDU Type M_ME_NC_1 (13): 6812aaf380150d0103000114eb030017ad304300
   
 ## Getting started
 1. <text>
