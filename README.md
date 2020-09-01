@@ -16,9 +16,8 @@ The content of this repository includes:
 2. Install SCAPY. To download the project: https://scapy.net/download/
 3. <text>
 ```
-sudo service ntp stop
-sudo ntpdate -s time.nist.gov
-sudo service ntp start
+from IEC104_Raw.dissector import APDU 
+from binascii import unhexlify
 ``` 
 
 4. 
