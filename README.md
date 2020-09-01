@@ -18,6 +18,9 @@ The content of this repository includes:
 ```
 from IEC104_Raw.dissector import APDU 
 from binascii import unhexlify
+  
+data13 = unhexlify('6812aaf380150d0103000114eb030017ad304300')
+APDU(data13).show()
 ``` 
 
 4. 
