@@ -15,6 +15,13 @@ The content of this repository includes:
 1. Install the lastest version of Python: https://www.python.org/downloads/
 2. Install SCAPY. To download the project: https://scapy.net/download/
 3. <text>
+```
+sudo service ntp stop
+sudo ntpdate -s time.nist.gov
+sudo service ntp start
+``` 
+
+4. 
   
   
 ## Acknowledgements
