@@ -1,8 +1,8 @@
 # Parser IEC104 Repo
-This repository uses SCAPY as a tool for packet manipulation.
+This repository uses SCAPY as a tool for packet manipulation for SCADA traffic based on the standar IEC 60870-5-104. 
 
 ## Standard List
-The content of this repository includes:
+The parser was developed based on the following standars:
 * IEC 60870-5-101: https://webstore.iec.ch/publication/3743&preview=1
 * IEC 60870-5-104: https://webstore.iec.ch/publication/3746&preview=1
 
@@ -10,8 +10,8 @@ The content of this repository includes:
 * Library Folder
   * const.py: fixed values lists.
   * dissector.py: Dissector for Application Protocol Data Unit (APDU), Application Service Data Unit (ASDU), Application Protocol control Information (APCI).
-  * fields.py:
-  * ioa.py: 
+  * fields.py: custom fields.
+  * ioa.py: List of the differents ASDU type.
   
 * Examples
   * ASDU Type M_ME_TF_1 (36): 6819c45902002401030001001304007f1daf4200b922120a0b0811
