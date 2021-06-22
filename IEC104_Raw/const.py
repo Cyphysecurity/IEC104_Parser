@@ -8,6 +8,7 @@ TYPEID_ASDU = {
     0x1E: 'M_SP_TB_1 (30)',
     0x1F: 'M_DP_TB_1 (31)',
     0x24: 'M_ME_TF_1 (36)',
+    0x25: 'M_IT_TB_1 (37)',
     0x2D: 'C_SC_NA_1 (45)',
     0x2E: 'C_DC_NA_1 (46)',
     0x32: 'C_SE_NC_1 (50)',
@@ -17,18 +18,18 @@ TYPEID_ASDU = {
 }
 
 TYPE_APCI = {
-    0x00: 'I (0x00)',
-    0x01: 'S (0x01)',
-    0x03: 'U (0x03)'
+    0x00: 'I',
+    0x01: 'S',
+    0x03: 'U'
 }
 
 UNNUMBERED_CONTROL_FIELD = {
-    0x80: 'TESTFR con',
-    0x40: 'TESTFR act',
-    0x20: 'STOPDT con',
-    0x10: 'STOPDT act',
-    0x08: 'STARTDT con',
-    0x04: 'STARTDT act'
+    0x01: 'STARTDT act',
+    0x02: 'STARTDT con',
+    0x04: 'STOPDT act',
+    0x08: 'STOPDT con',
+    0x10: 'TESTFR act',
+    0x20: 'TESTFR con',
 }
 
 CAUSE_OF_TX = {
@@ -74,30 +75,14 @@ CAUSE_OF_TX = {
     47: 'unknown information object address'
 }
 
-QDS_FLAGS = {
-    1: 'Overflow',
-    5: 'Blocked',
-    6: 'Substituted',
-    7: 'Not topical',
-    8: 'Invalid'
-}
+QDS_FLAGS = ['OV', '*', '*', '*', 'BL', 'SB', 'NT', 'IV']
 
-DIQ_FLAGS = {
-    5: 'Blocked',
-    6: 'Substituted',
-    7: 'Not topical',
-    8: 'Invalid'
-}
+DIQ_FLAGS = ['*', '*', '*', '*', 'BL', 'SB', 'NT', 'IV']
 
-SIQ_FLAGS = {
-    1: 'SPI',
-    5: 'Blocked',
-    6: 'Subsituted',
-    7: 'Not topical',
-    8: 'Invalid'
-}
+SIQ_FLAGS = ['SPI', '*', '*', '*', 'BL', 'SB', 'NT', 'IV']
 
-SQ = {
+
+SQ_ENUM = {
     0X00: False,
     0x80: True
 }
@@ -108,20 +93,21 @@ SU = {
 }
 
 #Day Of Week
-DOW = {
+DOW_ENUM = {
     0x00: 'undefined',
-    0x20: 'monday',
-    0x40: 'tuesday',
-    0x60: 'wednesday',
-    0x80: 'thursday',
-    0xA0: 'friday',
-    0xC0: 'saturday',
-    0xE0: 'sunday'
+    0x01: 'monday',
+    0x02: 'tuesday',
+    0x03: 'wednesday',
+    0x04: 'thursday',
+    0x05: 'friday',
+    0x06: 'saturday',
+    0x07: 'sunday'
 }
 
 SEL_EXEC = {
     0x00: 'Execute',
-    0x80: 'Select'
+    0x80: 'Select',
+    0x01: 'Select',
 }
 
 DPI_ENUM = {
@@ -183,4 +169,9 @@ QU_ENUM = {
 SCS_ENUM = {
     0x00: 'OFF',
     0x01: 'ON'
+}
+
+PN_ENUM = {
+    0x00: 'Positive confirm',
+    0x40: 'Negative confirm'
 }

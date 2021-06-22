@@ -1,59 +1,66 @@
 #!/usr/bin/env python3
 
+"""
+Version: 1.0
+Date: 06/22/2021
+"""
+
 from struct import unpack, pack
-from scapy.packet import Raw, bind_layers, Padding, Packet, conf
-from scapy.layers.inet import TCP, Ether
-from scapy.fields import XByteField, ByteField, ShortField, PacketListField, ByteEnumField, PacketField, ConditionalField
-from .ioa import IOAS, IOALEN
-from .const import TYPE_APCI, SQ, CAUSE_OF_TX, TYPEID_ASDU
-from scapy.all import conf
+from scapy.packet import NoPayload, bind_layers, Padding, Packet, conf # pylint: disable=import-error
+from scapy.layers.inet import TCP, IP, Ether # pylint: disable=import-error
+from scapy.fields import XByteField, ByteField, LEShortField, ShortField, PacketListField, ByteEnumField, ConditionalField # pylint: disable=import-error
+from .ioa import IOAS, IOALEN # pylint: disable=import-error
+from .const import TYPE_APCI, SQ_ENUM, CAUSE_OF_TX, PN_ENUM, TYPEID_ASDU # pylint: disable=import-error
+from scapy.all import conf # pylint: disable=import-error
+from copy import deepcopy
+
+import logging
+
+LOG_FORMAT = '%(asctime)s:%(name)s:%(levelname)s:%(message)s'
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter(LOG_FORMAT)
+file_handler = logging.FileHandler('logfile.log', mode = 'w')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
 
 class ASDU(Packet):
 
     name = 'IEC 60870-5-104-ASDU'
     fields_desc = [
-        ByteField('TypeId',None),
-        ByteField('SQ',None),
+        ByteEnumField('TypeId', None, TYPEID_ASDU),
+        ByteEnumField('SQ', None, SQ_ENUM),
         ByteField('NumIx',0),
         ByteEnumField('CauseTx',None, CAUSE_OF_TX),
-        ByteField('Negative',False),
+        ByteEnumField('PN', 0x00, PN_ENUM),
         ByteField('Test', None),
         ByteField('OA',None),
-        ByteField('Addr',None),
+        LEShortField('Addr',None),
         PacketListField('IOA', None)
     ]
 
     def do_dissect(self, s):
-        try: # TODO: [Luis] How to use Try & Exception
-            self.TypeId = s[0] & 0xff
-        except Exception:
-            if conf.debug_dissector:
-                raise NameError('HiThere')
-            self.TypeId = 'Error'
-        typeId = s[0] & 0xff
-        flags_SQ = s[1] & 0x80
-        
-        self.SQ =  flags_SQ
+        self.TypeId = s[0]
+        self.SQ =  s[1] & 0x80
         self.NumIx = s[1] & 0x7f
         self.CauseTx = s[2] & 0x3F
-        self.Negative = s[2] & 0x40
+        self.PN = s[2] & 0x40
         self.Test = s[2] & 0x80
         self.OA = s[3]
         self.Addr = unpack('<H',s[4:6])[0]
         # self.Addr = s[4] # NOTE: For Malformed Packets TypeId = 13
 
-
         flag=True
         list_IOA = list()
         remain = s[6:]
         # remain = s[5:] # NOTE: For Malformed Packets TypeId = 13 
-        
         idx=6
         # idx=5 # NOTE: For Malformed Packets TypeId = 13
         i=1
-        typeIOA = IOAS[typeId]
-        lenIOA=IOALEN[typeId]
-        j=0
+        typeIOA = IOAS[self.TypeId]
+        lenIOA=IOALEN[self.TypeId]
+        # j=0
         if self.SQ:
             for i in range(1,self.NumIx+1):
                 if flag:
@@ -70,32 +77,29 @@ class ASDU(Packet):
                     idx = idx+lenIOA
                 flag=False
         else:
-            for i in range(1,self.NumIx+1):
-                list_IOA.append(typeIOA(remain[:lenIOA])) 
-                remain = remain[lenIOA:]
-                idx= idx+lenIOA
+            list_IOA = [typeIOA(remain[(x*lenIOA):(x*lenIOA)+lenIOA]) for x in range(self.NumIx)]
+            idx += lenIOA * self.NumIx
+            # for i in range(1,self.NumIx+1):
+            #     list_IOA.append(typeIOA(remain[:lenIOA])) 
+            #     remain = remain[lenIOA:]
+            #     idx = idx+lenIOA
         self.IOA = list_IOA
         return s[idx:]
 
-    def extract_padding(self, s):
-        return None, s
-
     def do_build(self):
-        s = list(range(6))
-        s[0] = self.TypeId
-        s[1] = ((self.SQ << 7) & 0x80) | self.NumIx
-        s[2] = self.Test << 7 | self.Negative << 6 | self.CauseTx
-        s[3] = self.OA
-        s[4] = (self.Addr & 0xff)
-        s[5] = ((self.Addr >> 8) & 0xFF)
+        s = bytearray()
+        s.append(self.TypeId)
+        s.append(self.SQ | self.NumIx)
+        s.append(self.Test | self.PN | self.CauseTx)
+        s.append(self.OA)
+        s.append(int(self.Addr) & 0xff)
+        s.append(int(self.Addr) >> 8)
+        s = bytes(s)
         if self.IOA is not None:
             for i in self.IOA:
-                s += i.do_build()
+                s += i.build()
         
-        return bytes(s)
-
-    def __bytes__(self):
-        return bytes(self.build())
+        return s
 
 class APCI(Packet):
 
@@ -105,7 +109,7 @@ class APCI(Packet):
         XByteField('START', 0x68),
         ByteField('ApduLen', 4),
         ByteEnumField('Type', 0x00, TYPE_APCI),
-        ConditionalField(XByteField('UType', 0x01), lambda pkt: pkt.Type == 0x03),
+        ConditionalField(XByteField('UType', None), lambda pkt: pkt.Type == 0x03),
         ConditionalField(ShortField('Tx', 0x00), lambda pkt: pkt.Type == 0x00),
         ConditionalField(ShortField('Rx', 0x00), lambda pkt: pkt.Type < 3),
     ]
@@ -129,7 +133,7 @@ class APCI(Packet):
         payl, pad = self.extract_padding(s)
         self.do_dissect_payload(payl)
         if pad and conf.padding:
-            self.add_payload(Padding(pad))
+            self.add_payload(APDU(pad))
 
     def do_build(self):
         s = list(range(6))
@@ -148,8 +152,11 @@ class APCI(Packet):
                 s[2] = self.Type
                 s[3] = 0
             s[4] = (self.Rx << 1) & 0x00fe
-            s[5] = (self.Rx & 0xff00) >> 8
-        return bytes(s)
+            s[5] = ((self.Rx << 1) & 0xff00) >> 8
+        s = bytes(s)
+        if self.haslayer('ASDU'):
+            s += self.payload.build()
+        return s
 
     def extract_padding(self, s):
         if self.Type == 0x00 and self.ApduLen > 4:
@@ -165,13 +172,14 @@ class APDU(Packet):
     name = 'APDU'
 
     def dissect(self, s):
+        
         s = self.pre_dissect(s)
-        s = self.do_dissect(s)
+        s = self.do_dissect(s) # pylint: disable=assignment-from-no-return
         s = self.post_dissect(s)
-        payl, pad = self.extract_padding(s) 
+        payl, pad = self.extract_padding(s)
         self.do_dissect_payload(payl)
         if pad and conf.padding:
-            if pad[0] in [0x68]: #TODO: [Luis] "self.underlayer is not None"
+            if pad[0] in [0x68]: # pylint: disable=unsubscriptable-object
                 self.add_payload(APDU(pad, _internal=1, _underlayer=self))
             else:
                 self.add_payload(Padding(pad))
@@ -180,21 +188,59 @@ class APDU(Packet):
         apci = APCI(s, _internal=1, _underlayer=self)
         self.add_payload(apci)
 
-    def extract_padding(self, s):
-        return None, s
+def iterate_apdu(pkt: APDU):
+    while pkt is not None and not isinstance(pkt, NoPayload):
+        try:
+            apci = deepcopy(pkt['APCI'])
+            apci.payload = NoPayload()
+        except IndexError:
+            logger.error('[dissector] pkt= {0}'.format(pkt))
+            pass
+        else:
+        # asdu = deepcopy(pkt['ASDU'])
+        # asdu.payload = NoPayload()
+        # pkt = pkt['ASDU'].payload
+        # yield APDU()/apci/asdu
+            try:
+                asdu = deepcopy(pkt['ASDU'])
+            except IndexError:
+                # print('IndexErrorisito')
+                pkt = pkt['APCI'].payload
+                yield APDU()/apci
+            else:
+                asdu.payload = NoPayload()
+                pkt = pkt['ASDU'].payload
+                yield APDU()/apci/asdu
+            # apci = deepcopy(pkt['APCI'])
+            # apci.payload = NoPayload()
+
+        # if pkt.haslayer('ASDU'):
+            
+            
+            
+        
 
 bind_layers(TCP, APDU, sport=2404)
 bind_layers(TCP, APDU, dport=2404)
 
 if __name__ == '__main__':
     from binascii import hexlify, unhexlify
-    print('Dissecting "68040e001e00" ...\r\n')
-    data = unhexlify('68040e001e00')
-    data2 = unhexlify('00000c9ff00000090f09020708004500003a1dc540003f06337fc0a8fa03c0a86f25cdf40964d5df3c27dab0e477801801f5de5400000101080abca025b50574f04168040100c252')
-    APDU(data).show()
-    Ether(data2).show()
-    print('\r\nBuilding "68040e001e00"...\r\n')
-    pkt = APDU()/APCI(ApduLen=4, Type=0x00, Tx=7, Rx=15)
+    from datetime import datetime
+    from .ioa import CP56Time # pylint: disable=import-error
+    
+    ct = datetime.now()
+    ct = CP56Time(MS=ct.second*1000+(ct.microsecond//1000), Min=ct.minute, IV=0, Hour=ct.hour, SU=0, Day=ct.day, DOW=ct.today().weekday()+1, Month=ct.month, Year=ct.year-2000)
+    print('Dissecting "00000c9ff00000090f09020708004500003a1dc540003f06337fc0a8fa03c0a86f25cdf40964d5df3c27dab0e477801801f5de5400000101080abca025b50574f04168040100c252" ...\r\n')
+    data = unhexlify('00000c9ff00000090f09020708004500003a1dc540003f06337fc0a8fa03c0a86f25cdf40964d5df3c27dab0e477801801f5de5400000101080abca025b50574f04168040100c252')
+    Ether(data).show()
+    print('\r\nBuilding "00000c9ff00000090f09020708004500003a1dc540003f06337fc0a8fa03c0a86f25cdf40964d5df3c27dab0e477801801f5de5400000101080abca025b50574f04168040100c252"...\r\n')
+    pkt = Ether(type=0x0800, src='00:09:0f:09:02:07', dst='00:00:0c:9f:f0:00')/IP(version=4, ihl=5, tos=0x0, len=58, id=7621, flags='DF', frag=0, ttl=63, proto='tcp', src='192.168.250.3', dst='192.168.111.37')/TCP(sport=52724, dport=2404, seq=2577176935, ack=3669025911, dataofs=8, reserved=0, flags='PA', window=501, urgptr=0, options=[('NOP', None), ('NOP', None), ('Timestamp', (3164612021, 91549761))])/APDU()/APCI(ApduLen=4, Type=0x01, Rx=10593)
     a = pkt.build()
     pkt.show()
     print('Result:', hexlify(a))
+
+    pkt = APDU()
+    pkt /= APCI(ApduLen=25, Type=0x00, Tx=23, Rx=44)
+    pkt /= ASDU(TypeId=36, SQ=0, NumIx=1, CauseTx=1, Test=0, OA=1, Addr=2, IOA=[IOAS[36](IOA=1001, Value=2.3414123, QDS=0x81, CP56Time=ct)])
+    pkt.show()
+    print('Result:', hexlify(pkt.build()))
