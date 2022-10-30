@@ -1,35 +1,54 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2019 Neil Ortiz, nortizsi@ucsc.edu
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 TYPEID_ASDU = {
-    0x01: 'M_SP_NA_1 (1)',
+    0x24: 'M_ME_TF_1 (36)',
+    0x0D: 'M_ME_NC_1 (13)',
+    0x09: 'M_ME_NA_1 (9)',
+    0x32: 'C_SE_NC_1 (50)',
     0x03: 'M_DP_NA_1 (3)',
     0x05: 'M_ST_NA_1 (5)',
-    0x07: 'M_BO_NA_1 (7)',
-    0x09: 'M_ME_NA_1 (9)',
-    0x0D: 'M_ME_NC_1 (13)',
-    0x1E: 'M_SP_TB_1 (30)',
-    0x1F: 'M_DP_TB_1 (31)',
-    0x24: 'M_ME_TF_1 (36)',
-    0x25: 'M_IT_TB_1 (37)',
-    0x2D: 'C_SC_NA_1 (45)',
-    0x2E: 'C_DC_NA_1 (46)',
-    0x32: 'C_SE_NC_1 (50)',
-    0x46: 'M_EI_NA_1 (70)',
     0x64: 'C_IC_NA_1 (100)',
     0x67: 'C_CS_NA_1 (103)',
+    0x1E: 'M_SP_TB_1 (30)',
+    0x46: 'M_EI_NA_1 (70)',
+    0x1F: 'M_DP_TB_1 (31)',
+    0x01: 'M_SP_NA_1 (1)',
+    0x07: 'M_BO_NA_1 (7)',
 }
 
 TYPE_APCI = {
-    0x00: 'I',
-    0x01: 'S',
-    0x03: 'U'
+    0x00: 'I (0x00)',
+    0x01: 'S (0x01)',
+    0x03: 'U (0x03)'
 }
 
 UNNUMBERED_CONTROL_FIELD = {
-    0x01: 'STARTDT act',
-    0x02: 'STARTDT con',
-    0x04: 'STOPDT act',
-    0x08: 'STOPDT con',
-    0x10: 'TESTFR act',
-    0x20: 'TESTFR con',
+    0x80: 'TESTFR con',
+    0x40: 'TESTFR act',
+    0x20: 'STOPDT con',
+    0x10: 'STOPDT act',
+    0x08: 'STARTDT con',
+    0x04: 'STARTDT act'
 }
 
 CAUSE_OF_TX = {
@@ -75,16 +94,34 @@ CAUSE_OF_TX = {
     47: 'unknown information object address'
 }
 
-QDS_FLAGS = ['OV', '*', '*', '*', 'BL', 'SB', 'NT', 'IV']
-
-DIQ_FLAGS = ['*', '*', '*', '*', 'BL', 'SB', 'NT', 'IV']
-
-SIQ_FLAGS = ['SPI', '*', '*', '*', 'BL', 'SB', 'NT', 'IV']
-
-
-SQ_ENUM = {
+SQ = {
     0X00: False,
     0x80: True
+}
+
+OV = {
+    0X00: 'no overflow',
+    0x01: 'overflow'
+}
+
+BL = {
+    0X00: 'not blocked',
+    0x10: 'blocked'
+}
+
+SB = {
+    0X00: 'not substituted',
+    0x20: 'substituted'
+}
+
+NT = {
+    0X00: 'topical',
+    0x40: 'not topical'
+}
+
+IV = {
+    0X00: 'valid',
+    0x80: 'invalid'
 }
 
 SU = {
@@ -93,28 +130,27 @@ SU = {
 }
 
 #Day Of Week
-DOW_ENUM = {
+DOW = {
     0x00: 'undefined',
-    0x01: 'monday',
-    0x02: 'tuesday',
-    0x03: 'wednesday',
-    0x04: 'thursday',
-    0x05: 'friday',
-    0x06: 'saturday',
-    0x07: 'sunday'
+    0x20: 'monday',
+    0x40: 'tuesday',
+    0x60: 'wednesday',
+    0x80: 'thursday',
+    0xA0: 'friday',
+    0xC0: 'saturday',
+    0xE0: 'sunday'
 }
 
-SEL_EXEC = {
-    0x00: 'Execute',
-    0x80: 'Select',
-    0x01: 'Select',
+SE = {
+    0x00: 'execute',
+    0x80: 'select'
 }
 
-DPI_ENUM = {
-    0x00: 'Indeterminate or Intermediate state',
-    0x01: 'Determined state OFF',
-    0x02: 'Determined state ON',
-    0x03: 'Indeterminate state'
+DPI = {
+    0x00: 'indeterminate or intermediate state',
+    0x01: 'determined state OFF',
+    0x02: 'determined state ON',
+    0x03: 'indeterminate state'
 }
 
 TRANSIENT = {
@@ -122,7 +158,7 @@ TRANSIENT = {
     0x80: 'in transient'
 }
 
-QOI_ENUM = {
+QOi = {
     0x14: 'Station interrogation (global)',
     0x15: 'Interrogation of group 1',
     0x16: 'Interrogation of group 2',
@@ -142,36 +178,18 @@ QOI_ENUM = {
     0x24: 'Interrogation of group 16'
 }
 
-
-R_ENUM = {
-    0x00: 'Local power switch on',
-    0x01: 'Local manual reset',
-    0x02: 'Remote reset',
-}
-for i in range(0x03, 0x7f):
-    R_ENUM[i] = 'Undefined'
-
-I_ENUM = {
-    0x00: 'Initialization with unchanged local parameters',
-    0x80: 'Initialization after change of local parameters'
-}
-
-QU_ENUM = {
-    0x00: 'no pulse defined',
-    0x01: 'short pulse duration (circuit-breaker)',
-    0x02: 'long pulse duration',
-    0x03: 'persistent output',
-    0x04: 'reserved',
-    0x05: 'reserved',
-    0x06: 'reserved',
-}
-
-SCS_ENUM = {
+SPI = {
     0x00: 'OFF',
     0x01: 'ON'
 }
 
-PN_ENUM = {
-    0x00: 'Positive confirm',
-    0x40: 'Negative confirm'
+R = {
+    0x00: 'local power switch on',
+    0x01: 'local manual reset',
+    0x02: 'remote reset',
+}
+
+I = {
+    0x00: 'initialization with unchanged local parameters',
+    0x80: 'initialization after change of local parameters'
 }
