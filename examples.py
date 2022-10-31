@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
-from IEC104_Raw.dissector import APDU 
+
+from scapy.all import Ether
+from IEC104.dissector import APDU
+from IEC104.subPackets import *
 from binascii import unhexlify
 
-print('')
-print('ASDU TypeID M_ME_TF_1 (36)')
-print('')
-data36 = unhexlify('6819c45902002401030001001304007f1daf4200b922120a0b0811')
-APDU(data36).show()
 
-
-print('')
-print('ASDU TypeID M_ME_NC_1 (13)')
-print('')
-data13 = unhexlify('6812aaf380150d0103000114eb030017ad304300')
-APDU(data13).show()
+data = unhexlify('00090f09020778da6ee36360080045000047661240007e06abe9c0a86f61c0a8fa020964e3f2f642b3492ad216c68018ffeded4500000101080a2dce185fb7c4721b6811023002000d010300e4003f0251a7654300')
+Ether(data).show()
