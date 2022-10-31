@@ -22,7 +22,7 @@ The parser was developed based on the following standars:
 2. Install SCAPY. To download the project: https://scapy.net/download/
 3. Run the following test scrip:
 ```
-from IEC104_Raw.dissector import APDU 
+from IEC104.dissector import APDU 
 from binascii import unhexlify
   
 data13 = unhexlify('6812aaf380150d0103000114eb030017ad304300')
